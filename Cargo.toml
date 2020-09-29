@@ -1,0 +1,15 @@
+[package]
+name = "wstring"
+version = "0.1.0"
+authors = [
+    "Floris Bruynooghe <flub@devork.be>",
+    "Jan Michael Auer <mail@jauer.org>",
+    "Sentry <oss@sentry.io>",
+]
+description = "String types to work directly with UTF-16 encoded strings"
+repository = "https://github.com/getsentry/wstring"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+byteorder = "1"
