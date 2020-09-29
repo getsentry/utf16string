@@ -30,6 +30,7 @@ use byteorder::ByteOrder;
 pub use byteorder::{BigEndian, LittleEndian, BE, LE};
 
 mod slicing;
+mod wstring;
 
 #[doc(inline)]
 pub use crate::slicing::SliceIndex;
@@ -57,6 +58,13 @@ impl Default for Utf16Error {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// A UTF-16 [String]-like type with little- or big-endian byte order.
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct WString<E: 'static + ByteOrder> {
+    buf: Vec<u8>,
+    _endian: PhantomData<&'static E>,
 }
 
 /// A UTF-16 [str]-like type with little- or big-endian byte order.
