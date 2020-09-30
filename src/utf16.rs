@@ -17,7 +17,7 @@ use crate::Utf16Error;
 /// code unit between 0xD800-0xDBFF.
 #[inline]
 pub(crate) fn is_leading_surrogate(code_unit: u16) -> bool {
-    code_unit & 0xD800 == 0xD800
+    code_unit & 0xFC00 == 0xD800
 }
 
 /// Whether a code unit is a trailing or low surrogate.
@@ -33,7 +33,7 @@ pub(crate) fn is_leading_surrogate(code_unit: u16) -> bool {
 /// code unit between 0xDC00-0xDFFF.
 #[inline]
 pub(crate) fn is_trailing_surrogate(code_unit: u16) -> bool {
-    code_unit & 0xDC00 == 0xDC00
+    code_unit & 0xFC00 == 0xDC00
 }
 
 /// Decodes a surrogate pair of code units into a char.
@@ -56,7 +56,7 @@ pub(crate) unsafe fn decode_surrogates(u: u16, u2: u16) -> char {
     unsafe { std::char::from_u32_unchecked(c) }
 }
 
-/// Checks that the raw bytes are valid UTF-16LE.
+/// Checks that the raw bytes are valid UTF-16.
 pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Error> {
     // This could be optimised as it does not need to be actually decoded, just needs to
     // be a valid byte sequence.
@@ -68,5 +68,28 @@ pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Er
         Ok(())
     } else {
         Err(Utf16Error::new())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_leading_surrogate() {
+        assert!(is_leading_surrogate(0xd800));
+
+        // Regression test: bit pattern of 0xf800 starts with 0b111110, which has all bits
+        // of 0b110110 set but is outside of the surrogate range.
+        assert!(!is_leading_surrogate(0xf800));
+    }
+
+    #[test]
+    fn test_is_trailing_surrogate() {
+        assert!(is_trailing_surrogate(0xDC00));
+
+        // regression test: bit pattern of 0xfc00 starts with 0b11111, which has all
+        // bits of 0b110111 set but is outside of the surrogate range.
+        assert!(!is_trailing_surrogate(0xfc00));
     }
 }

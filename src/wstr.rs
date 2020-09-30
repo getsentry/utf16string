@@ -446,6 +446,12 @@ mod tests {
         let s = WStr::from_utf16le(b).unwrap();
         let chars: Vec<char> = s.chars().collect();
         assert_eq!(chars, vec!['\u{10000}', 'x']);
+
+        // Regression: this leading surrogate used to be badly detected.
+        let b = b"\x41\xf8A\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let chars: Vec<char> = s.chars().collect();
+        assert_eq!(chars, vec!['\u{f841}', 'A']);
     }
 
     #[test]
