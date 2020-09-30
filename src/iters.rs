@@ -1,0 +1,118 @@
+//! Implementation for the various char iterators.
+//!
+//! The type itself lives in the lib.rs file to avoid having to have a public alias, but
+//! implementations live here.
+
+use byteorder::ByteOrder;
+
+use std::iter::FusedIterator;
+
+use crate::utf16::{decode_surrogates, is_leading_surrogate, is_trailing_surrogate};
+use crate::{WStrCharIndices, WStrChars};
+
+impl<'a, E> Iterator for WStrChars<'a, E>
+where
+    E: ByteOrder,
+{
+    type Item = char;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        // Our input is valid UTF-16, so we can take a lot of shortcuts.
+        let chunk = self.chunks.next()?;
+        let u = E::read_u16(chunk);
+
+        if !is_leading_surrogate(u) {
+            // SAFETY: This is now guaranteed a valid Unicode code point.
+            Some(unsafe { std::char::from_u32_unchecked(u as u32) })
+        } else {
+            let chunk = self.chunks.next().expect("missing trailing surrogate");
+            let u2 = E::read_u16(chunk);
+            debug_assert!(
+                is_trailing_surrogate(u2),
+                "code unit not a trailing surrogate"
+            );
+            Some(unsafe { decode_surrogates(u, u2) })
+        }
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        // No need to fully construct all characters
+        self.chunks
+            .filter(|bb| !is_trailing_surrogate(E::read_u16(bb)))
+            .count()
+    }
+
+    #[inline]
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
+    }
+}
+
+impl<'a, E> FusedIterator for WStrChars<'a, E> where E: ByteOrder {}
+
+impl<'a, E> DoubleEndedIterator for WStrChars<'a, E>
+where
+    E: ByteOrder,
+{
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        // Our input is valid UTF-16, so we can take a lot of shortcuts.
+        let chunk = self.chunks.next_back()?;
+        let u = E::read_u16(chunk);
+
+        if !is_trailing_surrogate(u) {
+            // SAFETY: This is now guaranteed a valid Unicode code point.
+            Some(unsafe { std::char::from_u32_unchecked(u as u32) })
+        } else {
+            let chunk = self.chunks.next_back().expect("missing leading surrogate");
+            let u2 = E::read_u16(chunk);
+            debug_assert!(
+                is_leading_surrogate(u2),
+                "code unit not a leading surrogate"
+            );
+            Some(unsafe { decode_surrogates(u2, u) })
+        }
+    }
+}
+
+impl<'a, E> Iterator for WStrCharIndices<'a, E>
+where
+    E: ByteOrder,
+{
+    type Item = (usize, char);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let pos = self.index;
+        let c = self.chars.next()?;
+        self.index += c.len_utf16() * std::mem::size_of::<u16>();
+        Some((pos, c))
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        // No need to fully construct all characters
+        self.chars.count()
+    }
+
+    #[inline]
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
+    }
+}
+
+impl<'a, E> DoubleEndedIterator for WStrCharIndices<'a, E>
+where
+    E: ByteOrder,
+{
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let c = self.chars.next_back()?;
+        let pos = self.index + self.chars.chunks.len() * std::mem::size_of::<u16>();
+        Some((pos, c))
+    }
+}
+
+impl<'a, E> FusedIterator for WStrCharIndices<'a, E> where E: ByteOrder {}

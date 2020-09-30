@@ -1,9 +1,15 @@
+//! Implementations for the [WString] type.
+//!
+//! The type itself lives in the lib.rs file to avoid having to have a public alias, but
+//! implementations live here.
+
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 
-use crate::{validate_raw_utf16, Utf16Error, WStr, WString};
+use crate::utf16::validate_raw_utf16;
+use crate::{Utf16Error, WStr, WString};
 
 impl WString<LittleEndian> {
     /// Creates a new [WString] from raw bytes in little-endian byte order.
