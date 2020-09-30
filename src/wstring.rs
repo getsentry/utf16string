@@ -54,7 +54,7 @@ where
         self.buf.len()
     }
 
-    /// Returns `true` if the string has a [len] of zero, `false` otherwise.
+    /// Returns `true` if the string has a [Self::len] of zero, `false` otherwise.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
