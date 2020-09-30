@@ -83,12 +83,12 @@ pub struct WStr<E: 'static + ByteOrder> {
 impl WStr<LittleEndian> {
     /// Creates a new `&WStr<LE>`.
     pub fn from_utf16le(raw: &[u8]) -> Result<&Self, Utf16Error> {
-        WStr::from_utf16(raw)
+        Self::from_utf16(raw)
     }
 
     /// Creates a new `&mut WStr<LE>`.
     pub fn from_utf16le_mut(raw: &mut [u8]) -> Result<&mut Self, Utf16Error> {
-        WStr::from_utf16_mut(raw)
+        Self::from_utf16_mut(raw)
     }
 
     /// Creates a new [WStr] with little-endian byte-ordering.
@@ -112,7 +112,7 @@ impl WStr<LittleEndian> {
     /// You must guarantee that the buffer passed in is encoded correctly as UTF-16 with
     /// little-endian byte-order, otherwise you will get undefined behaviour.
     pub unsafe fn from_utf16le_unchecked(raw: &[u8]) -> &Self {
-        WStr::from_utf16_unchecked(raw)
+        Self::from_utf16_unchecked(raw)
     }
 
     /// Creates a new `&mut WStr<LE>`.
@@ -122,19 +122,19 @@ impl WStr<LittleEndian> {
     /// You must guarantee that the buffer passed in is encoded correctly as UTF-16 with
     /// little-endian byte-order, otherwise you will get undefined behaviour.
     pub unsafe fn from_utf16le_unchecked_mut(raw: &mut [u8]) -> &mut Self {
-        WStr::from_utf16_unchecked_mut(raw)
+        Self::from_utf16_unchecked_mut(raw)
     }
 }
 
 impl WStr<BigEndian> {
     /// Creates a new `&WStr<BE>`.
     pub fn from_utf16be(raw: &[u8]) -> Result<&Self, Utf16Error> {
-        WStr::from_utf16(raw)
+        Self::from_utf16(raw)
     }
 
     /// Creates a new `&mut WStr<BE>`.
     pub fn from_utf16be_mut(raw: &mut [u8]) -> Result<&mut Self, Utf16Error> {
-        WStr::from_utf16_mut(raw)
+        Self::from_utf16_mut(raw)
     }
 
     /// Creates a new `&WStr<BE>` from an existing byte-slice with big-endian byte-ordering.
@@ -158,7 +158,7 @@ impl WStr<BigEndian> {
     /// You must guarantee that the buffer passed in is encoded correctly as UTF-16 with
     /// big-endian byte-order, otherwise you will get undefined behaviour.
     pub unsafe fn from_utf16be_unchecked(raw: &[u8]) -> &Self {
-        WStr::from_utf16_unchecked(raw)
+        Self::from_utf16_unchecked(raw)
     }
 
     /// Creates a new `&mut WStr<BE>`.
@@ -168,7 +168,7 @@ impl WStr<BigEndian> {
     /// You must guarantee that the buffer passed in is encoded correctly as UTF-16 with
     /// big-endian byte-order, otherwise you will get undefined behaviour.
     pub unsafe fn from_utf16be_unchecked_mut(raw: &mut [u8]) -> &mut Self {
-        WStr::from_utf16_unchecked_mut(raw)
+        Self::from_utf16_unchecked_mut(raw)
     }
 }
 
