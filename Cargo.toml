@@ -3,7 +3,6 @@ name = "wstring"
 version = "0.1.0"
 authors = [
     "Floris Bruynooghe <flub@devork.be>",
-    "Jan Michael Auer <mail@jauer.org>",
     "Sentry <oss@sentry.io>",
 ]
 description = "String types to work directly with UTF-16 encoded strings"
