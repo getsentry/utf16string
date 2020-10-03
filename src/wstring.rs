@@ -93,6 +93,16 @@ where
         }
     }
 
+    /// Creates a new [WString] from a [str].
+    #[inline]
+    pub fn from_str(s: &str) -> Self {
+        let mut new = Self::with_capacity(s.len());
+        for ch in s.chars() {
+            new.push(ch);
+        }
+        new
+    }
+
     /// Converts this string into a byte vector.
     #[inline]
     pub fn into_bytes(self) -> Vec<u8> {
@@ -205,6 +215,39 @@ where
         ch
     }
 
+    /// Retains only the characters specified by the predicate.
+    #[inline]
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(char) -> bool,
+    {
+        let len = self.len();
+        let mut del_bytes = 0;
+        let mut idx = 0;
+
+        while idx < len {
+            let ch = unsafe { self.get_unchecked(idx..len).chars().next().unwrap() };
+            let ch_len = ch.len_utf16_bytes();
+
+            if !f(ch) {
+                del_bytes += ch_len;
+            } else if del_bytes > 0 {
+                unsafe {
+                    std::ptr::copy(
+                        self.buf.as_ptr().add(idx),
+                        self.buf.as_mut_ptr().add(idx - del_bytes),
+                        ch_len,
+                    );
+                }
+            }
+            idx += ch_len;
+        }
+
+        if del_bytes > 0 {
+            unsafe { self.buf.set_len(len - del_bytes) }
+        }
+    }
+
     /// Returns the length in bytes, not chars or graphemes.
     #[inline]
     pub fn len(&self) -> usize {
@@ -249,9 +292,39 @@ where
     }
 }
 
+impl<E> From<&str> for WString<E>
+where
+    E: ByteOrder,
+{
+    #[inline]
+    fn from(source: &str) -> Self {
+        Self::from_str(source)
+    }
+}
+
+impl<E> From<&mut str> for WString<E>
+where
+    E: ByteOrder,
+{
+    #[inline]
+    fn from(source: &mut str) -> Self {
+        Self::from_str(source)
+    }
+}
+
+impl<E> From<&String> for WString<E>
+where
+    E: ByteOrder,
+{
+    #[inline]
+    fn from(source: &String) -> Self {
+        Self::from_str(source.as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use byteorder::LE;
+    use byteorder::{BE, LE};
 
     use super::*;
 
@@ -302,6 +375,29 @@ mod tests {
         let b_be = b"\x00h\x00e\x00l\x00l\x00o";
         let s_be = unsafe { WString::from_utf16be_unchecked(b_be.to_vec()) };
         assert_eq!(s_be.to_utf8(), "hello");
+    }
+
+    #[test]
+    fn test_from_str() {
+        let s: WString<LE> = WString::from_str("hello");
+        assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
+
+        let s: WString<BE> = WString::from_str("hello");
+        assert_eq!(s.as_bytes(), b"\x00h\x00e\x00l\x00l\x00o");
+
+        let s: WString<LE> = From::from("hello");
+        assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
+
+        let mut v = String::from("hello");
+        let s: WString<LE> = From::from(v.as_mut_str());
+        assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
+    }
+
+    #[test]
+    fn test_from_string() {
+        let v = String::from("hello");
+        let s: WString<LE> = From::from(&v);
+        assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
     }
 
     #[test]
@@ -415,6 +511,13 @@ mod tests {
         assert_eq!(s.remove(2), '\u{10000}');
         assert_eq!(s.remove(2), 'h');
         assert_eq!(s.to_utf8(), "ai");
+    }
+
+    #[test]
+    fn test_retain() {
+        let mut s: WString<LE> = From::from("h_e__ll_o");
+        s.retain(|c| c != '_');
+        assert_eq!(s.to_utf8(), "hello");
     }
 
     #[test]
