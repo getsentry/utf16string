@@ -248,6 +248,59 @@ where
         }
     }
 
+    /// Inserts a [char] into this string at the given byte position.
+    ///
+    /// This is an `O(n)` operation as it requires copying every element in the buffer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `idx` is larger thatn the string's lenth or if it does not lie on a [char]
+    /// boundary.
+    #[inline]
+    pub fn insert(&mut self, idx: usize, ch: char) {
+        assert!(self.is_char_boundary(idx), "insert not on char boundary");
+        let mut buf = [0u8; 4];
+        let len = ch.encode_utf16_into::<E>(&mut buf);
+
+        unsafe {
+            self.insert_bytes(idx, &buf[..len]);
+        }
+    }
+
+    unsafe fn insert_bytes(&mut self, idx: usize, bytes: &[u8]) {
+        #![allow(unused_unsafe)]
+        let orig_len = self.len();
+        let len_bytes = bytes.len();
+        self.buf.reserve(len_bytes);
+
+        unsafe {
+            std::ptr::copy(
+                self.buf.as_ptr().add(idx),
+                self.buf.as_mut_ptr().add(idx + len_bytes),
+                orig_len - idx,
+            );
+            std::ptr::copy(bytes.as_ptr(), self.buf.as_mut_ptr().add(idx), len_bytes);
+            self.buf.set_len(orig_len + len_bytes);
+        }
+    }
+
+    /// Inserts a string slice into this string at the given byte position.
+    ///
+    /// This is an `O(n)` operation as it requires copying every element in the buffer.  The
+    /// string slice must have the same endianness.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `idx` is larger than the string's length or if it does not lie on a [char]
+    /// boundary.
+    #[inline]
+    pub fn insert_wstr(&mut self, idx: usize, string: &WStr<E>) {
+        assert!(self.is_char_boundary(idx));
+        unsafe {
+            self.insert_bytes(idx, string.as_bytes());
+        }
+    }
+
     /// Returns the length in bytes, not chars or graphemes.
     #[inline]
     pub fn len(&self) -> usize {
@@ -518,6 +571,21 @@ mod tests {
         let mut s: WString<LE> = From::from("h_e__ll_o");
         s.retain(|c| c != '_');
         assert_eq!(s.to_utf8(), "hello");
+    }
+
+    #[test]
+    fn test_insert() {
+        let mut s: WString<LE> = From::from("hllo");
+        s.insert(2, 'e');
+        assert_eq!(s.to_utf8(), "hello");
+    }
+
+    #[test]
+    fn test_insert_wstr() {
+        let mut s: WString<LE> = From::from("ho");
+        let slice: WString<LE> = From::from("ell");
+        s.insert_wstr(2, slice.as_wstr());
+        assert_eq!(s.to_string(), "hello");
     }
 
     #[test]
