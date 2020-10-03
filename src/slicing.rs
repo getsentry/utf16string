@@ -8,7 +8,7 @@ use std::ops::{
 
 use byteorder::ByteOrder;
 
-use crate::WStr;
+use crate::{WStr, WString};
 
 mod private {
     use super::*;
@@ -383,6 +383,31 @@ where
         index.index_mut(self)
     }
 }
+
+impl<I, E> Index<I> for WString<E>
+where
+    I: SliceIndex<WStr<E>>,
+    E: ByteOrder,
+{
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &I::Output {
+        index.index(self)
+    }
+}
+
+impl<I, E> IndexMut<I> for WString<E>
+where
+    I: SliceIndex<WStr<E>>,
+    E: ByteOrder,
+{
+    #[inline]
+    fn index_mut(&mut self, index: I) -> &mut I::Output {
+        index.index_mut(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -436,6 +461,60 @@ mod tests {
     fn test_wstr_range_to_inclusive() {
         let b = b"h\x00e\x00l\x00l\x00o\x00";
         let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[..=7];
+
+        assert_eq!(t.to_utf8(), "hell");
+    }
+
+    #[test]
+    fn test_wstring_range() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WString::from_utf16le(b.to_vec()).unwrap();
+        let t = &s[2..8];
+
+        assert_eq!(t.to_utf8(), "ell");
+    }
+
+    #[test]
+    fn test_wstring_range_to() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WString::from_utf16le(b.to_vec()).unwrap();
+        let t = &s[..8];
+
+        assert_eq!(t.to_utf8(), "hell");
+    }
+
+    #[test]
+    fn test_wstring_range_from() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WString::from_utf16le(b.to_vec()).unwrap();
+        let t = &s[2..];
+
+        assert_eq!(t.to_utf8(), "ello");
+    }
+
+    #[test]
+    fn test_wstring_range_full() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WString::from_utf16le(b.to_vec()).unwrap();
+        let t = &s[..];
+
+        assert_eq!(t.to_utf8(), "hello");
+    }
+
+    #[test]
+    fn test_wstring_range_inclusive() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WString::from_utf16le(b.to_vec()).unwrap();
+        let t = &s[2..=7];
+
+        assert_eq!(t.to_utf8(), "ell");
+    }
+
+    #[test]
+    fn test_wstring_range_to_inclusive() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WString::from_utf16le(b.to_vec()).unwrap();
         let t = &s[..=7];
 
         assert_eq!(t.to_utf8(), "hell");
