@@ -71,9 +71,59 @@ pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Er
     }
 }
 
+/// Extension trait for UTF-16 utilities on [char].
+pub(crate) trait Utf16CharExt {
+    /// Returns the number of bytes this character encodes into.
+    ///
+    /// The [char::len_utf16] method from the standard library returns the size in number of
+    /// u16 code units instead of in bytes.  This provides a character length method which
+    /// matches a string's length (`len`) definition.
+    fn len_utf16_bytes(self) -> usize;
+
+    /// Encodes this char, writing it into a bytes buffer.
+    ///
+    /// Returns the number of bytes written.
+    ///
+    /// Panics if the destination buffer is too small.
+    fn encode_utf16_into<E: ByteOrder>(self, buf: &mut [u8]) -> usize;
+}
+
+impl Utf16CharExt for char {
+    #[inline]
+    fn len_utf16_bytes(self) -> usize {
+        let code_point: u32 = self.into();
+        if code_point & 0xFFFF == code_point {
+            2
+        } else {
+            4
+        }
+    }
+
+    #[inline]
+    fn encode_utf16_into<E: ByteOrder>(self, mut buf: &mut [u8]) -> usize {
+        let mut code_point: u32 = self.into();
+
+        if (code_point & 0xFFFF) == code_point {
+            assert!(buf.len() >= 2, "destination too small, need 2 bytes");
+            E::write_u16(&mut buf, code_point as u16);
+            2
+        } else {
+            assert!(buf.len() >= 4, "destination too small, need 4 bytes");
+            code_point -= 0x1_0000;
+            let code_unit0: u16 = 0xD800 | ((code_point >> 10) as u16);
+            let code_unit1: u16 = 0xDC00 | ((code_point as u16) & 0x3FF);
+            E::write_u16(&mut buf, code_unit0);
+            E::write_u16(&mut buf[2..], code_unit1);
+            4
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use crate::LE;
 
     #[test]
     fn test_is_leading_surrogate() {
@@ -91,5 +141,45 @@ mod tests {
         // regression test: bit pattern of 0xfc00 starts with 0b11111, which has all
         // bits of 0b110111 set but is outside of the surrogate range.
         assert!(!is_trailing_surrogate(0xfc00));
+    }
+
+    #[test]
+    fn test_utf16_char_ext_encode_utf16_into() {
+        let mut v = vec![0u8; 10];
+        let slice = v.as_mut_slice();
+        let ret = 'a'.encode_utf16_into::<LE>(slice);
+        assert_eq!(ret, 2);
+        assert_eq!(&slice[..2], b"a\x00");
+
+        let ret = '\u{10000}'.encode_utf16_into::<LE>(&mut slice[2..]);
+        assert_eq!(ret, 4);
+        assert_eq!(&v.as_slice()[..6], b"a\x00\x00\xd8\x00\xdc");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_utf16_char_ext_encode_utf16_into_too_small_single_unit() {
+        let mut v = vec![0u8; 1];
+        'a'.encode_utf16_into::<LE>(v.as_mut_slice());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_utf16_char_ext_encode_utf16_into_too_small_surrogate() {
+        let mut v = vec![0u8; 3];
+        '\u{10000}'.encode_utf16_into::<LE>(v.as_mut_slice());
+    }
+
+    #[test]
+    fn test_utf16_char_ext_len_utf16_bytes() {
+        let l0 = 'c'.len_utf16_bytes();
+        let l1 = 'c'.len_utf16() * std::mem::size_of::<u16>();
+        assert_eq!(l0, l1);
+        assert_eq!(l0, 2);
+
+        let l0 = '\u{10000}'.len_utf16_bytes();
+        let l1 = '\u{10000}'.len_utf16() * std::mem::size_of::<u16>();
+        assert_eq!(l0, l1);
+        assert_eq!(l0, 4);
     }
 }

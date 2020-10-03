@@ -8,7 +8,7 @@ use std::ops::{Deref, DerefMut};
 
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 
-use crate::utf16::validate_raw_utf16;
+use crate::utf16::{validate_raw_utf16, Utf16CharExt};
 use crate::{Utf16Error, WStr, WString};
 
 impl WString<LittleEndian> {
@@ -127,6 +127,82 @@ where
     #[inline]
     pub fn reserve(&mut self, additional: usize) {
         self.buf.reserve(additional)
+    }
+
+    /// Shrinks the capacity of this string to match its length.
+    #[inline]
+    pub fn shrink_to_fit(&mut self) {
+        self.buf.shrink_to_fit()
+    }
+
+    /// Appends the given [char] to the end of this string.
+    #[inline]
+    pub fn push(&mut self, ch: char) {
+        let mut buf = [0u8; 4];
+        let byte_count = ch.encode_utf16_into::<E>(&mut buf);
+        self.buf.extend_from_slice(&buf[..byte_count]);
+    }
+
+    /// Shortens this string to the specified length.
+    ///
+    /// The `new_len` is specified in bytes and not characters, just as [Self::len] returns
+    /// the length in bytes.  If `new_len` is greater than the string's current length, this
+    /// has no effect.
+    ///
+    /// Note that this method has no effect on the allocated capacity of the string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `new_len` does not lie on a [char] boundary.
+    #[inline]
+    pub fn truncate(&mut self, new_len: usize) {
+        if new_len < self.len() {
+            assert!(
+                self.is_char_boundary(new_len),
+                "new WString length not on char boundary"
+            );
+            self.buf.truncate(new_len)
+        }
+    }
+
+    /// Removes the last character from the string bufer and returns it.
+    ///
+    /// Returns [None]if this string is empty.
+    #[inline]
+    pub fn pop(&mut self) -> Option<char> {
+        let ch = self.chars().next_back()?;
+        let newlen = self.len() - ch.len_utf16_bytes();
+        unsafe {
+            self.buf.set_len(newlen);
+        }
+        Some(ch)
+    }
+
+    /// Removes a [char] from this string at the given byte position and returns it.
+    ///
+    /// This is an `O(n)` operation as it requires copying every element in the buffer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `idx` is larger than or equal to the string's length, or if it does not
+    /// lie on a [char] boundary.
+    #[inline]
+    pub fn remove(&mut self, idx: usize) -> char {
+        let ch = match self[idx..].chars().next() {
+            Some(ch) => ch,
+            None => panic!("cannot remove a char from the end of a string"),
+        };
+        let next = idx + ch.len_utf16_bytes();
+        let len = self.len();
+        unsafe {
+            std::ptr::copy(
+                self.buf.as_ptr().add(next),
+                self.buf.as_mut_ptr().add(idx),
+                len - next,
+            );
+            self.buf.set_len(len - (next - idx));
+        }
+        ch
     }
 
     /// Returns the length in bytes, not chars or graphemes.
@@ -268,6 +344,77 @@ mod tests {
         assert_eq!(s.capacity(), 0);
         s.reserve(42);
         assert!(s.capacity() >= 42);
+    }
+
+    #[test]
+    fn test_shrink_to_fit() {
+        let mut s: WString<LE> = WString::with_capacity(42);
+        assert!(s.capacity() >= 42);
+        s.shrink_to_fit();
+        assert_eq!(s.capacity(), 0);
+    }
+
+    #[test]
+    fn test_push() {
+        let mut s: WString<LE> = WString::new();
+        s.push('h');
+        s.push('i');
+        assert_eq!(s.as_bytes(), b"h\x00i\x00");
+        assert_eq!(s.to_utf8(), "hi");
+
+        s.push('\u{10000}');
+        assert_eq!(s.as_bytes(), b"h\x00i\x00\x00\xd8\x00\xdc");
+        assert_eq!(s.to_utf8(), "hi\u{10000}");
+    }
+
+    #[test]
+    fn test_truncate() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let mut s = WString::from_utf16le(b.to_vec()).unwrap();
+
+        s.truncate(20);
+        assert_eq!(s.to_utf8(), "hello");
+
+        s.truncate(4);
+        assert_eq!(s.to_utf8(), "he");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_truncate_no_char_boundary() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let mut s = WString::from_utf16le(b.to_vec()).unwrap();
+
+        s.truncate(1);
+    }
+
+    #[test]
+    fn test_pop() {
+        let b = b"a\x00\x00\xd8\x00\xdch\x00i\x00";
+        let mut s = WString::from_utf16le(b.to_vec()).unwrap();
+        assert_eq!(s.to_utf8(), "a\u{10000}hi");
+
+        assert_eq!(s.pop(), Some('i'));
+        assert_eq!(s.to_utf8(), "a\u{10000}h");
+
+        assert_eq!(s.pop(), Some('h'));
+        assert_eq!(s.to_utf8(), "a\u{10000}");
+
+        assert_eq!(s.pop(), Some('\u{10000}'));
+        assert_eq!(s.to_utf8(), "a");
+
+        assert_eq!(s.pop(), Some('a'));
+        assert!(s.is_empty());
+    }
+
+    #[test]
+    fn test_remove() {
+        let b = b"a\x00\x00\xd8\x00\xdch\x00i\x00";
+        let mut s = WString::from_utf16le(b.to_vec()).unwrap();
+
+        assert_eq!(s.remove(2), '\u{10000}');
+        assert_eq!(s.remove(2), 'h');
+        assert_eq!(s.to_utf8(), "ai");
     }
 
     #[test]
