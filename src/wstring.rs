@@ -301,6 +301,17 @@ where
         }
     }
 
+    /// Returns a mutable reference to the contents of this string.
+    ///
+    /// # Safety
+    ///
+    /// You must ensure that the bytes remain encoded in UTF-16 with the correct byte-order,
+    /// otherwise you will get undefined behaviour trying to use the string.
+    #[inline]
+    pub unsafe fn as_mut_vec(&mut self) -> &mut Vec<u8> {
+        &mut self.buf
+    }
+
     /// Returns the length in bytes, not chars or graphemes.
     #[inline]
     pub fn len(&self) -> usize {
@@ -311,6 +322,33 @@ where
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// Splits the string into two at the given index.
+    ///
+    /// Returns a newly allocated [WString].  `self` contains bytes `[0..at]` and the
+    /// returned [WString] contains bytes `[at..len]]`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `at` is not on a character boundary or is beyond the end of the string.
+    #[inline]
+    #[must_use = "use `.truncate()` if you don't need the other half"]
+    pub fn split_off(&mut self, at: usize) -> WString<E> {
+        assert!(
+            self.is_char_boundary(at),
+            "split_off not on a char boundary"
+        );
+        let other = self.buf.split_off(at);
+        unsafe { WString::from_utf16_unchecked(other) }
+    }
+
+    /// Truncates this string, removing all contents.
+    ///
+    /// The length will be zero, but the capacity will remain unchanged.
+    #[inline]
+    pub fn clear(&mut self) {
+        self.buf.clear();
     }
 }
 
@@ -586,6 +624,42 @@ mod tests {
         let slice: WString<LE> = From::from("ell");
         s.insert_wstr(2, slice.as_wstr());
         assert_eq!(s.to_string(), "hello");
+    }
+
+    #[test]
+    fn test_as_mut_vec() {
+        let mut s: WString<LE> = From::from("hello");
+        unsafe {
+            let v: &mut Vec<u8> = s.as_mut_vec();
+            v.extend(b" \x00w\x00o\x00r\x00l\x00d\x00");
+        }
+        assert_eq!(s.to_string(), "hello world");
+    }
+
+    #[test]
+    fn test_split_off() {
+        let mut s: WString<LE> = From::from("helloworld");
+        let t = s.split_off(10);
+        assert_eq!(s.to_string(), "hello");
+        assert_eq!(t.to_string(), "world");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_split_off_bad_index() {
+        let mut s: WString<LE> = From::from("hi");
+        let _t = s.split_off(1);
+    }
+
+    #[test]
+    fn test_clear() {
+        let mut s: WString<LE> = From::from("hello");
+        assert_eq!(s.to_string(), "hello");
+        let cap = s.capacity();
+
+        s.clear();
+        assert!(s.is_empty());
+        assert_eq!(s.capacity(), cap)
     }
 
     #[test]
