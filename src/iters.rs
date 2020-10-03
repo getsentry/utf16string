@@ -7,7 +7,7 @@ use byteorder::ByteOrder;
 
 use std::iter::FusedIterator;
 
-use crate::utf16::{decode_surrogates, is_leading_surrogate, is_trailing_surrogate};
+use crate::utf16::{decode_surrogates, is_leading_surrogate, is_trailing_surrogate, Utf16CharExt};
 use crate::{WStrCharIndices, WStrChars};
 
 impl<'a, E> Iterator for WStrChars<'a, E>
@@ -87,7 +87,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let pos = self.index;
         let c = self.chars.next()?;
-        self.index += c.len_utf16() * std::mem::size_of::<u16>();
+        self.index += c.len_utf16_bytes();
         Some((pos, c))
     }
 
