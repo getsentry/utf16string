@@ -233,14 +233,14 @@ where
 
     #[inline]
     unsafe fn get_unchecked(self, slice: &WStr<E>) -> &Self::Output {
-        let ptr = slice.as_ptr();
+        let ptr = slice.as_ptr().add(self.start);
         let len = slice.len() - self.start;
         WStr::from_utf16_unchecked(std::slice::from_raw_parts(ptr, len))
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: &mut WStr<E>) -> &mut Self::Output {
-        let ptr = slice.as_mut_ptr();
+        let ptr = slice.as_mut_ptr().add(self.start);
         let len = slice.len() - self.start;
         WStr::from_utf16_unchecked_mut(std::slice::from_raw_parts_mut(ptr, len))
     }
@@ -381,5 +381,63 @@ where
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut I::Output {
         index.index_mut(self)
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wstr_range() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[2..8];
+
+        assert_eq!(t.to_utf8(), "ell");
+    }
+
+    #[test]
+    fn test_wstr_range_to() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[..8];
+
+        assert_eq!(t.to_utf8(), "hell");
+    }
+
+    #[test]
+    fn test_wstr_range_from() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[2..];
+
+        assert_eq!(t.to_utf8(), "ello");
+    }
+
+    #[test]
+    fn test_wstr_range_full() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[..];
+
+        assert_eq!(t.to_utf8(), "hello");
+    }
+
+    #[test]
+    fn test_wstr_range_inclusive() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[2..=7];
+
+        assert_eq!(t.to_utf8(), "ell");
+    }
+
+    #[test]
+    fn test_wstr_range_to_inclusive() {
+        let b = b"h\x00e\x00l\x00l\x00o\x00";
+        let s = WStr::from_utf16le(b).unwrap();
+        let t = &s[..=7];
+
+        assert_eq!(t.to_utf8(), "hell");
     }
 }
