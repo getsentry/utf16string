@@ -9,7 +9,7 @@ description = "String types to work directly with UTF-16 encoded strings"
 readme = "README.md"
 keywords = ["utf16", "string", "wstring"]
 categories = ["encoding", "text-processing"]
-repository = "https://github.com/getsentry/wstring"
+repository = "https://github.com/getsentry/utf16string"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 
