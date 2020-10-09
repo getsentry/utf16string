@@ -1,19 +1,17 @@
 # UTF-16 string types
 
-This crate provides string types to work with UTF-16 encoded bytes, in
-a similar way to which `&str` and `String` works with UTF-8 encoded
-bytes.
+This crate provides two string types to work with UTF-16 encoded
+bytes, they are directly analogous to how `String` and `&str` work
+with UTF-8 encoded bytes.
 
-```
-use wstring::{WStr, LittleEndian};
+UTF-16 can be encoded in little- and big-endian byte order, this crate
+identifies which encoding the types contain to using a generic
+[byteorder](https://docs.rs/byteorder) type, thus the main types
+exposed are:
 
-let b = b"h\x00e\x00l\x00l\x00o\x00";
-let s: &WStr<LittleEndian> = WStr::from_utf16(b).unwrap();
+- `&WStr<ByteOrder>`
+- `WString<ByteOrder>`
 
-let chars: Vec<char> = s.chars().collect();
-assert_eq!(chars, vec!['h', 'e', 'l', 'l', 'o']);
-
-assert_eq!(s.to_utf8(), "hello");
-```
-
-Still a work in progress so far, but already usable.
+These types aim to behave very similar to the standard libarary `&str`
+and `String` types.  While many APIs are already covered, feel free to
+contribute more methods.
