@@ -50,15 +50,19 @@
 //! For example:
 //!
 //! ```
+//! # use std::error::Error;
 //! use wstring::{LE, WStr};
 //!
+//! # fn main() -> Result<(), Box<dyn Error>> {
 //! let b = b"h\x00e\x00l\x00l\x00o\x00";
 //!
-//! let s0: &WStr<LE> = WStr::from_utf16(b).unwrap();
-//! let s1 = WStr::from_utf16le(b).unwrap();
+//! let s0: &WStr<LE> = WStr::from_utf16(b)?;
+//! let s1 = WStr::from_utf16le(b)?;
 //!
 //! assert_eq!(s0, s1);
 //! assert_eq!(s0.to_utf8(), "hello");
+//! #     Ok(())
+//! # }
 //! ```
 
 #![deny(missing_docs, missing_debug_implementations)]
@@ -92,15 +96,19 @@ pub struct Utf16Error {
 /// # Examples
 ///
 /// ```
+/// # use std::error::Error;
 /// use wstring::{LE, WString};
 ///
+/// # fn main() -> Result<(), Box<dyn Error>> {
 /// let v = Vec::from(&b"h\x00e\x00l\x00l\x00o\x00"[..]);
-/// let s = WString::from_utf16le(v).unwrap();
+/// let s = WString::from_utf16le(v)?;
 ///
 /// let chars: Vec<char> = s.chars().collect();
 /// assert_eq!(chars, vec!['h', 'e', 'l', 'l', 'o']);
 ///
 /// assert_eq!(s.to_utf8(), "hello");
+/// #    Ok(())
+/// # }
 /// ```
 ///
 /// Converting from valid Unicode is infallible:
@@ -128,15 +136,19 @@ pub struct WString<E: 'static + ByteOrder> {
 /// # Examples
 ///
 /// ```
+/// # use std::error::Error;
 /// use wstring::{LE, WStr};
 ///
+/// # fn main() -> Result<(), Box<dyn Error>> {
 /// let b = b"h\x00e\x00l\x00l\x00o\x00";
-/// let s: &WStr<LE> = WStr::from_utf16le(b).unwrap();
+/// let s: &WStr<LE> = WStr::from_utf16le(b)?;
 ///
 /// let chars: Vec<char> = s.chars().collect();
 /// assert_eq!(chars, vec!['h', 'e', 'l', 'l', 'o']);
 ///
 /// assert_eq!(s.to_utf8(), "hello");
+/// #    Ok(())
+/// # }
 /// ```
 
 #[derive(Debug, Eq, PartialEq, Hash)]
