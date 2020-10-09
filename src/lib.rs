@@ -35,7 +35,7 @@
 //! to denote the type:
 //!
 //! ```
-//! use wstring::{BigEndian, BE, WString};
+//! use utf16string::{BigEndian, BE, WString};
 //!
 //! let s0: WString<BigEndian> = WString::from_str("hello");
 //! assert_eq!(s0.len(), 10);
@@ -51,7 +51,7 @@
 //!
 //! ```
 //! # use std::error::Error;
-//! use wstring::{LE, WStr};
+//! use utf16string::{LE, WStr};
 //!
 //! # fn main() -> Result<(), Box<dyn Error>> {
 //! let b = b"h\x00e\x00l\x00l\x00o\x00";
@@ -97,7 +97,7 @@ pub struct Utf16Error {
 ///
 /// ```
 /// # use std::error::Error;
-/// use wstring::{LE, WString};
+/// use utf16string::{LE, WString};
 ///
 /// # fn main() -> Result<(), Box<dyn Error>> {
 /// let v = Vec::from(&b"h\x00e\x00l\x00l\x00o\x00"[..]);
@@ -114,7 +114,7 @@ pub struct Utf16Error {
 /// Converting from valid Unicode is infallible:
 ///
 /// ```
-/// use wstring::{LE, WString};
+/// use utf16string::{LE, WString};
 ///
 /// let s0: WString<LE> = WString::from_str("hello");
 /// assert_eq!(s0.len(), 10);
@@ -137,7 +137,7 @@ pub struct WString<E: 'static + ByteOrder> {
 ///
 /// ```
 /// # use std::error::Error;
-/// use wstring::{LE, WStr};
+/// use utf16string::{LE, WStr};
 ///
 /// # fn main() -> Result<(), Box<dyn Error>> {
 /// let b = b"h\x00e\x00l\x00l\x00o\x00";

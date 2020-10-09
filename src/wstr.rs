@@ -30,7 +30,7 @@ impl WStr<LittleEndian> {
     /// # Example
     ///
     /// ```
-    /// use wstring::{LE, WStr};
+    /// use utf16string::{LE, WStr};
     ///
     /// let b = b"h\x00i\x00";
     /// let s: &WStr<LE> = unsafe { WStr::from_utf16_unchecked(b) };
@@ -76,7 +76,7 @@ impl WStr<BigEndian> {
     /// # Example
     ///
     /// ```
-    /// use wstring::{BE, WStr};
+    /// use utf16string::{BE, WStr};
     ///
     /// let b = b"h\x00i\x00";
     /// let s: &WStr<BE> = unsafe { WStr::from_utf16_unchecked(b) };
