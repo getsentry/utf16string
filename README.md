@@ -15,3 +15,8 @@ exposed are:
 These types aim to behave very similar to the standard libarary `&str`
 and `String` types.  While many APIs are already covered, feel free to
 contribute more methods.
+
+Documentation is [at docs.rs](https://docs.rs/utf16string).  Currently
+a lot of documentation is rather terse, referring to the matching
+methods on the string types in the standard library is best in those
+cases.  Feel free to contribute more exhaustive in-line docs.
