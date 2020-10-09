@@ -87,7 +87,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let pos = self.index;
         let c = self.chars.next()?;
-        self.index += c.len_utf16_bytes();
+        self.index += c.encoded_utf16_len();
         Some((pos, c))
     }
 

@@ -181,7 +181,7 @@ where
     #[inline]
     pub fn pop(&mut self) -> Option<char> {
         let ch = self.chars().next_back()?;
-        let newlen = self.len() - ch.len_utf16_bytes();
+        let newlen = self.len() - ch.encoded_utf16_len();
         unsafe {
             self.buf.set_len(newlen);
         }
@@ -202,7 +202,7 @@ where
             Some(ch) => ch,
             None => panic!("cannot remove a char from the end of a string"),
         };
-        let next = idx + ch.len_utf16_bytes();
+        let next = idx + ch.encoded_utf16_len();
         let len = self.len();
         unsafe {
             std::ptr::copy(
@@ -227,7 +227,7 @@ where
 
         while idx < len {
             let ch = unsafe { self.get_unchecked(idx..len).chars().next().unwrap() };
-            let ch_len = ch.len_utf16_bytes();
+            let ch_len = ch.encoded_utf16_len();
 
             if !f(ch) {
                 del_bytes += ch_len;

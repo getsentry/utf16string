@@ -116,7 +116,7 @@ pub(crate) trait Utf16CharExt {
     /// The [char::len_utf16] method from the standard library returns the size in number of
     /// u16 code units instead of in bytes.  This provides a character length method which
     /// matches a string's length (`len`) definition.
-    fn len_utf16_bytes(self) -> usize;
+    fn encoded_utf16_len(self) -> usize;
 
     /// Encodes this char, writing it into a bytes buffer.
     ///
@@ -129,7 +129,7 @@ pub(crate) trait Utf16CharExt {
 impl Utf16CharExt for char {
     // todo: rename to blen_utf16
     #[inline]
-    fn len_utf16_bytes(self) -> usize {
+    fn encoded_utf16_len(self) -> usize {
         let code_point: u32 = self.into();
         if code_point & 0xFFFF == code_point {
             2
@@ -254,12 +254,12 @@ mod tests {
 
     #[test]
     fn test_utf16_char_ext_len_utf16_bytes() {
-        let l0 = 'c'.len_utf16_bytes();
+        let l0 = 'c'.encoded_utf16_len();
         let l1 = 'c'.len_utf16() * std::mem::size_of::<u16>();
         assert_eq!(l0, l1);
         assert_eq!(l0, 2);
 
-        let l0 = '\u{10000}'.len_utf16_bytes();
+        let l0 = '\u{10000}'.encoded_utf16_len();
         let l1 = '\u{10000}'.len_utf16() * std::mem::size_of::<u16>();
         assert_eq!(l0, l1);
         assert_eq!(l0, 4);
