@@ -56,19 +56,57 @@ pub(crate) unsafe fn decode_surrogates(u: u16, u2: u16) -> char {
     unsafe { std::char::from_u32_unchecked(c) }
 }
 
-/// Checks that the raw bytes are valid UTF-16.
+/// Checks that the raw bytes are valid UTF-16LE.
+///
+/// When an error occurs this code needs to set `error_len` to skip forward 2 bytes,
+/// *unless* we have a lone leading surrogate and are at the end of the input slice in which
+/// case we need to return `None.
+///
+/// We compute `valid_up_to` lazily for performance, even though it's a little more verbose.
 pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Error> {
-    // This could be optimised as it does not need to be actually decoded, just needs to
-    // be a valid byte sequence.
-    if raw.len() % 2 != 0 {
-        return Err(Utf16Error::new());
+    let base_ptr = raw.as_ptr() as usize;
+    let mut chunks = raw.chunks_exact(std::mem::size_of::<u16>());
+
+    while let Some(chunk) = chunks.next() {
+        let code_point_ptr = chunk.as_ptr() as usize;
+        let code_point = E::read_u16(chunk);
+
+        if is_trailing_surrogate(code_point) {
+            return Err(Utf16Error {
+                valid_up_to: code_point_ptr - base_ptr,
+                error_len: Some(std::mem::size_of::<u16>() as u8),
+            });
+        }
+
+        if is_leading_surrogate(code_point) {
+            match chunks.next().map(E::read_u16) {
+                Some(u2) => {
+                    if !is_trailing_surrogate(u2) {
+                        return Err(Utf16Error {
+                            valid_up_to: code_point_ptr - base_ptr,
+                            error_len: Some(std::mem::size_of::<u16>() as u8),
+                        });
+                    }
+                }
+                None => {
+                    return Err(Utf16Error {
+                        valid_up_to: code_point_ptr - base_ptr,
+                        error_len: None,
+                    });
+                }
+            }
+        }
     }
-    let u16iter = raw.chunks_exact(2).map(|chunk| E::read_u16(chunk));
-    if std::char::decode_utf16(u16iter).all(|result| result.is_ok()) {
-        Ok(())
-    } else {
-        Err(Utf16Error::new())
+
+    let remainder = chunks.remainder();
+    if !remainder.is_empty() {
+        return Err(Utf16Error {
+            valid_up_to: remainder.as_ptr() as usize - base_ptr,
+            error_len: None,
+        });
     }
+
+    Ok(())
 }
 
 /// Extension trait for UTF-16 utilities on [char].
@@ -89,6 +127,7 @@ pub(crate) trait Utf16CharExt {
 }
 
 impl Utf16CharExt for char {
+    // todo: rename to blen_utf16
     #[inline]
     fn len_utf16_bytes(self) -> usize {
         let code_point: u32 = self.into();
@@ -123,7 +162,7 @@ impl Utf16CharExt for char {
 mod tests {
     use super::*;
 
-    use crate::LE;
+    use crate::{WStr, LE};
 
     #[test]
     fn test_is_leading_surrogate() {
@@ -141,6 +180,49 @@ mod tests {
         // regression test: bit pattern of 0xfc00 starts with 0b11111, which has all
         // bits of 0b110111 set but is outside of the surrogate range.
         assert!(!is_trailing_surrogate(0xfc00));
+    }
+
+    #[test]
+    fn test_wstr_utf16error() {
+        // This actually tests validate_raw_utf16(), but via the public APIs.
+
+        // Lone trailing surrogate in 2nd char
+        let b = b"h\x00\x00\xdce\x00l\x00l\x00o\x00";
+        let e = WStr::from_utf16le(b).err().unwrap();
+        assert_eq!(e.valid_up_to(), 2);
+        assert_eq!(e.error_len(), Some(2));
+
+        let head = WStr::from_utf16le(&b[..e.valid_up_to()]).unwrap();
+        assert_eq!(head.to_utf8(), "h");
+
+        let start = e.valid_up_to() + e.error_len().unwrap();
+        let tail = WStr::from_utf16le(&b[start..]).unwrap();
+        assert_eq!(tail.to_utf8(), "ello");
+
+        // Leading surrogate, missing trailing surrogate in 2nd char
+        let b = b"h\x00\x00\xd8e\x00l\x00l\x00o\x00";
+        let e = WStr::from_utf16le(b).err().unwrap();
+        assert_eq!(e.valid_up_to(), 2);
+        assert_eq!(e.error_len(), Some(2));
+
+        let head = WStr::from_utf16le(&b[..e.valid_up_to()]).unwrap();
+        assert_eq!(head.to_utf8(), "h");
+
+        let start = e.valid_up_to() + e.error_len().unwrap();
+        let tail = WStr::from_utf16le(&b[start..]).unwrap();
+        assert_eq!(tail.to_utf8(), "ello");
+
+        // End of input
+        let b = b"h\x00e\x00l\x00l\x00o\x00\x00\xd8";
+        let e = WStr::from_utf16le(b).err().unwrap();
+        assert_eq!(e.valid_up_to(), 10);
+        assert_eq!(e.error_len(), None);
+
+        // End of input, single byte
+        let b = b"h\x00e\x00l\x00l\x00o\x00 ";
+        let e = WStr::from_utf16le(b).err().unwrap();
+        assert_eq!(e.valid_up_to(), 10);
+        assert_eq!(e.error_len(), None);
     }
 
     #[test]

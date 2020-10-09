@@ -19,8 +19,6 @@
 
 #![deny(missing_docs, missing_debug_implementations)]
 
-use std::error::Error;
-use std::fmt;
 use std::marker::PhantomData;
 use std::slice::ChunksExact;
 
@@ -28,6 +26,7 @@ use byteorder::ByteOrder;
 
 pub use byteorder::{BigEndian, LittleEndian, BE, LE};
 
+mod error;
 mod iters;
 mod slicing;
 mod utf16;
@@ -39,27 +38,9 @@ pub use crate::slicing::SliceIndex;
 
 /// Error for invalid UTF-16 encoded bytes.
 #[derive(Debug, Copy, Clone)]
-pub struct Utf16Error {}
-
-impl fmt::Display for Utf16Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Invalid UTF-16LE data in byte slice")
-    }
-}
-
-impl Error for Utf16Error {}
-
-impl Utf16Error {
-    /// Create a new [Utf16Error].
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl Default for Utf16Error {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct Utf16Error {
+    valid_up_to: usize,
+    error_len: Option<u8>,
 }
 
 /// A UTF-16 [String]-like type with little- or big-endian byte order.
