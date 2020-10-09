@@ -1,6 +1,6 @@
-//! Implementations for the [WStr] type.
+//! Implementations for the [`WStr`] type.
 //!
-//! The type itself lives in the lib.rs file to avoid having to have a public alias, but
+//! The type itself lives in the `lib.rs` file to avoid having to have a public alias, but
 //! implementations live here.
 
 use std::fmt;
@@ -30,7 +30,7 @@ impl WStr<LittleEndian> {
     /// # Example
     ///
     /// ```
-    /// use wstring::{WStr, LE};
+    /// use wstring::{LE, WStr};
     ///
     /// let b = b"h\x00i\x00";
     /// let s: &WStr<LE> = unsafe { WStr::from_utf16_unchecked(b) };
@@ -76,7 +76,7 @@ impl WStr<BigEndian> {
     /// # Example
     ///
     /// ```
-    /// use wstring::{WStr, BE};
+    /// use wstring::{BE, WStr};
     ///
     /// let b = b"h\x00i\x00";
     /// let s: &WStr<BE> = unsafe { WStr::from_utf16_unchecked(b) };
@@ -109,7 +109,7 @@ where
 {
     /// Creates a new `&WStr<E>` from an existing UTF-16 byte-slice.
     ///
-    /// If the byte-slice is not valid [Utf16Error] is returned.
+    /// If the byte-slice is not valid [`Utf16Error`] is returned.
     pub fn from_utf16(raw: &[u8]) -> Result<&Self, Utf16Error> {
         validate_raw_utf16::<E>(raw)?;
         Ok(unsafe { Self::from_utf16_unchecked(raw) })
@@ -117,7 +117,7 @@ where
 
     /// Creates a new `&mut WStr<E>` from an existing UTF-16 byte-slice.
     ///
-    /// If the byte-slice is not valid [Utf16Error] is returned.
+    /// If the byte-slice is not valid [`Utf16Error`] is returned.
     pub fn from_utf16_mut(raw: &mut [u8]) -> Result<&mut Self, Utf16Error> {
         validate_raw_utf16::<E>(raw)?;
         Ok(unsafe { Self::from_utf16_unchecked_mut(raw) })
@@ -133,7 +133,7 @@ where
         &*(raw as *const [u8] as *const Self)
     }
 
-    /// Like [Self::from_utf16_unchecked] but return a mutable reference.
+    /// Like [`WStr::from_utf16_unchecked`] but return a mutable reference.
     ///
     /// # Safety
     ///
@@ -149,7 +149,7 @@ where
         self.raw.len()
     }
 
-    /// Returns `true` if the [Self::len] is zero.
+    /// Returns `true` if the [WStr::len] is zero.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
@@ -206,7 +206,7 @@ where
     ///
     /// The slice indices are on byte offsets of the underlying UTF-16 encoded buffer, if
     /// the subslice is not on character boundaries or otherwise invalid this will return
-    /// `None`.
+    /// [`None`].
     #[inline]
     pub fn get<I>(&self, index: I) -> Option<&<I as SliceIndex<WStr<E>>>::Output>
     where
@@ -215,11 +215,11 @@ where
         index.get(self)
     }
 
-    /// Returns a mutable subslice of `Self`.
+    /// Returns a mutable subslice of `self`.
     ///
     /// The slice indices are on byte offsets of the underlying UTF-16 encoded buffer, if
     /// the subslice is not on character boundaries or otherwise invalid this will return
-    /// `None`.
+    /// [`None`].
     #[inline]
     pub fn get_mut<I>(&mut self, index: I) -> Option<&mut <I as SliceIndex<WStr<E>>>::Output>
     where
@@ -228,11 +228,11 @@ where
         index.get_mut(self)
     }
 
-    /// Returns a subslice of `Self`.
+    /// Returns a subslice of `self`.
     ///
     /// # Safety
     ///
-    /// Like [Self::get] but this results in undefined behaviour if the sublice is not on
+    /// Like [`WStr::get`] but this results in undefined behaviour if the sublice is not on
     /// character boundaries or otherwise invalid.
     #[inline]
     pub unsafe fn get_unchecked<I>(&self, index: I) -> &<I as SliceIndex<WStr<E>>>::Output
@@ -242,12 +242,12 @@ where
         index.get_unchecked(self)
     }
 
-    /// Returns a mutable subslice of `Self`.
+    /// Returns a mutable subslice of `self`.
     ///
     /// # Safety
     ///
-    /// Lice [Self::get_mut] but this results in undefined behaviour if the subslice is not
-    /// on character boundaries or otherwise invalid.
+    /// Lice [`WStr::get_mut`] but this results in undefined behaviour if the subslice is
+    /// not on character boundaries or otherwise invalid.
     #[inline]
     pub unsafe fn get_unchecked_mut<I>(
         &mut self,
@@ -259,7 +259,7 @@ where
         index.get_unchecked_mut(self)
     }
 
-    /// Returns an iterator of the [char]s of a string slice.
+    /// Returns an iterator of the [`char`]s of a string slice.
     #[inline]
     pub fn chars(&self) -> WStrChars<E> {
         WStrChars {
@@ -268,7 +268,7 @@ where
         }
     }
 
-    /// Returns and iterator over the [char]s of a string slice and their positions.
+    /// Returns and iterator over the [`char`]s of a string slice and their positions.
     #[inline]
     pub fn char_indices(&self) -> WStrCharIndices<E> {
         WStrCharIndices {
@@ -277,7 +277,7 @@ where
         }
     }
 
-    /// Returns the [WStr] as a new owned [String].
+    /// Returns this [`WStr`] as a new owned [`String`].
     pub fn to_utf8(&self) -> String {
         self.chars().collect()
     }

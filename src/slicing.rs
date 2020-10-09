@@ -1,6 +1,6 @@
-//! The [SliceIndex] trait and implementations.
+//! The [`SliceIndex`] trait and implementations.
 //!
-//! This supports all slicing for [WStr].
+//! This supports all slicing for [`WStr`] and [`WString`].
 
 use std::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
@@ -22,7 +22,7 @@ mod private {
     impl SealedSliceIndex for RangeInclusive<usize> {}
     impl SealedSliceIndex for RangeToInclusive<usize> {}
 }
-/// Our own version of [std::slice::SliceIndex].
+/// Our own version of [`std::slice::SliceIndex`].
 ///
 /// Since this is a sealed trait, we need to re-define this trait.  This trait itself is
 /// sealed as well.
@@ -39,15 +39,15 @@ where
     /// Returns a mutable reference to the output at this location, if in bounds.
     fn get_mut(self, slice: &mut T) -> Option<&mut Self::Output>;
 
-    /// Like [Self::get] but without bounds checking.
+    /// Like [`SliceIndex::get`] but without bounds checking.
     ///
     /// # Safety
     ///
     /// You must guarantee the resulting slice is valid UTF-16LE, otherwise you will get
-    /// undefined behavour.
+    /// undefined behaviour.
     unsafe fn get_unchecked(self, slice: &T) -> &Self::Output;
 
-    /// Like [Self::get_mut] but without bounds checking.
+    /// Like [`SliceIndex::get_mut`] but without bounds checking.
     ///
     /// # Safety
     ///
@@ -62,7 +62,7 @@ where
     fn index_mut(self, slice: &mut T) -> &mut Self::Output;
 }
 
-/// Implments substring slicing with syntax `&self[..]` or `&mut self[..]`.\
+/// Implments substring slicing with syntax `&self[..]` or `&mut self[..]`.
 ///
 /// Unlike other implementations this can never panic.
 impl<E> SliceIndex<WStr<E>> for RangeFull

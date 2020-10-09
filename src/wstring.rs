@@ -1,6 +1,6 @@
-//! Implementations for the [WString] type.
+//! Implementations for the [`WString`] type.
 //!
-//! The type itself lives in the lib.rs file to avoid having to have a public alias, but
+//! The type itself lives in the `lib.rs` file to avoid having to have a public alias, but
 //! implementations live here.
 
 use std::marker::PhantomData;
@@ -12,12 +12,12 @@ use crate::utf16::{validate_raw_utf16, Utf16CharExt};
 use crate::{Utf16Error, WStr, WString};
 
 impl WString<LittleEndian> {
-    /// Creates a new [WString] from raw bytes in little-endian byte order.
+    /// Creates a new [`WString`] from raw bytes in little-endian byte order.
     pub fn from_utf16le(buf: Vec<u8>) -> Result<Self, Utf16Error> {
         Self::from_utf16(buf)
     }
 
-    /// Converts a vector of bytes to a [WString], not checking validity.
+    /// Converts a vector of bytes to a [`WString`], not checking validity.
     ///
     /// # Safety
     ///
@@ -30,12 +30,12 @@ impl WString<LittleEndian> {
 }
 
 impl WString<BigEndian> {
-    /// Creates a new [WString] from raw bytes in big-endian byte-order.
+    /// Creates a new [`WString`] from raw bytes in big-endian byte-order.
     pub fn from_utf16be(buf: Vec<u8>) -> Result<Self, Utf16Error> {
         Self::from_utf16(buf)
     }
 
-    /// Converts a vector of bytes to a [WString], not checking validity.
+    /// Converts a vector of bytes to a [`WString`], not checking validity.
     ///
     /// # Safety
     ///
@@ -51,7 +51,7 @@ impl<E> WString<E>
 where
     E: ByteOrder,
 {
-    /// Creates a new empty [WString].
+    /// Creates a new empty [`WString`].
     #[inline]
     pub fn new() -> Self {
         Self {
@@ -60,7 +60,7 @@ where
         }
     }
 
-    /// Creates a new empty [WString] with a capacity.
+    /// Creates a new empty [`WString`] with a capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
@@ -69,7 +69,7 @@ where
         }
     }
 
-    /// Converts a vector of bytes to a [WString].
+    /// Converts a vector of bytes to a [`WString`].
     #[inline]
     pub fn from_utf16(buf: Vec<u8>) -> Result<Self, Utf16Error> {
         validate_raw_utf16::<E>(buf.as_slice())?;
@@ -79,7 +79,7 @@ where
         })
     }
 
-    /// Converts a vector of bytes to a [WString], not checking validity.
+    /// Converts a vector of bytes to a [`WString`], not checking validity.
     ///
     /// # Safety
     ///
@@ -93,7 +93,7 @@ where
         }
     }
 
-    /// Creates a new [WString] from a [str].
+    /// Creates a new [`WString`] from a [`str`].
     #[inline]
     pub fn from_str(s: &str) -> Self {
         let mut new = Self::with_capacity(s.len());
@@ -121,7 +121,7 @@ where
         self
     }
 
-    /// Appends a string slicie onto the end of this string.
+    /// Appends a string slice onto the end of this string.
     #[inline]
     pub fn push_wstr(&mut self, string: &WStr<E>) {
         self.buf.extend_from_slice(string.as_bytes())
@@ -145,7 +145,7 @@ where
         self.buf.shrink_to_fit()
     }
 
-    /// Appends the given [char] to the end of this string.
+    /// Appends the given [`char`] to the end of this string.
     #[inline]
     pub fn push(&mut self, ch: char) {
         let mut buf = [0u8; 4];
@@ -155,9 +155,9 @@ where
 
     /// Shortens this string to the specified length.
     ///
-    /// The `new_len` is specified in bytes and not characters, just as [Self::len] returns
-    /// the length in bytes.  If `new_len` is greater than the string's current length, this
-    /// has no effect.
+    /// The `new_len` is specified in bytes and not characters, just as [WString::len]
+    /// returns the length in bytes.  If `new_len` is greater than the string's current
+    /// length, this has no effect.
     ///
     /// Note that this method has no effect on the allocated capacity of the string.
     ///
@@ -175,9 +175,9 @@ where
         }
     }
 
-    /// Removes the last character from the string bufer and returns it.
+    /// Removes the last character from the string buffer and returns it.
     ///
-    /// Returns [None]if this string is empty.
+    /// Returns [`None`] if this string is empty.
     #[inline]
     pub fn pop(&mut self) -> Option<char> {
         let ch = self.chars().next_back()?;
@@ -188,14 +188,14 @@ where
         Some(ch)
     }
 
-    /// Removes a [char] from this string at the given byte position and returns it.
+    /// Removes a [`char`] from this string at the given byte position and returns it.
     ///
     /// This is an `O(n)` operation as it requires copying every element in the buffer.
     ///
     /// # Panics
     ///
     /// Panics if `idx` is larger than or equal to the string's length, or if it does not
-    /// lie on a [char] boundary.
+    /// lie on a [`char`] boundary.
     #[inline]
     pub fn remove(&mut self, idx: usize) -> char {
         let ch = match self[idx..].chars().next() {
@@ -248,14 +248,14 @@ where
         }
     }
 
-    /// Inserts a [char] into this string at the given byte position.
+    /// Inserts a [`char`] into this string at the given byte position.
     ///
     /// This is an `O(n)` operation as it requires copying every element in the buffer.
     ///
     /// # Panics
     ///
-    /// Panics if `idx` is larger thatn the string's lenth or if it does not lie on a [char]
-    /// boundary.
+    /// Panics if `idx` is larger than the string's length or if it does not lie on a
+    /// [`char`] boundary.
     #[inline]
     pub fn insert(&mut self, idx: usize, ch: char) {
         assert!(self.is_char_boundary(idx), "insert not on char boundary");
@@ -287,12 +287,12 @@ where
     /// Inserts a string slice into this string at the given byte position.
     ///
     /// This is an `O(n)` operation as it requires copying every element in the buffer.  The
-    /// string slice must have the same endianness.
+    /// string slice must have the same endianess.
     ///
     /// # Panics
     ///
-    /// Panics if `idx` is larger than the string's length or if it does not lie on a [char]
-    /// boundary.
+    /// Panics if `idx` is larger than the string's length or if it does not lie on a
+    /// [`char`] boundary.
     #[inline]
     pub fn insert_wstr(&mut self, idx: usize, string: &WStr<E>) {
         assert!(self.is_char_boundary(idx));
@@ -318,7 +318,7 @@ where
         self.buf.len()
     }
 
-    /// Returns `true` if the string has a [Self::len] of zero, `false` otherwise.
+    /// Returns `true` if the string has a [`WString::len`] of zero, `false` otherwise.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
@@ -326,7 +326,7 @@ where
 
     /// Splits the string into two at the given index.
     ///
-    /// Returns a newly allocated [WString].  `self` contains bytes `[0..at]` and the
+    /// Returns a newly allocated [`WString`].  `self` contains bytes `[0..at]` and the
     /// returned [WString] contains bytes `[at..len]]`.
     ///
     /// # Panics

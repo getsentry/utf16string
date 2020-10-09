@@ -109,13 +109,13 @@ pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Er
     Ok(())
 }
 
-/// Extension trait for UTF-16 utilities on [char].
+/// Extension trait for UTF-16 utilities on [`char`].
 pub(crate) trait Utf16CharExt {
     /// Returns the number of bytes this character encodes into.
     ///
-    /// The [char::len_utf16] method from the standard library returns the size in number of
-    /// u16 code units instead of in bytes.  This provides a character length method which
-    /// matches a string's length (`len`) definition.
+    /// The [`char::len_utf16`] method from the standard library returns the size in number
+    /// of u16 code units instead of in bytes.  This provides a character length method
+    /// which matches a string's length (`len`) definition.
     fn encoded_utf16_len(self) -> usize;
 
     /// Encodes this char, writing it into a bytes buffer.
@@ -127,7 +127,6 @@ pub(crate) trait Utf16CharExt {
 }
 
 impl Utf16CharExt for char {
-    // todo: rename to blen_utf16
     #[inline]
     fn encoded_utf16_len(self) -> usize {
         let code_point: u32 = self.into();
