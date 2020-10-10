@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: '11 7 * * 1,4'
 
+env:
+  RUSTFLAGS: -Dwarnings
+  RUSTDOCFLAGS: -Dwarnings
+
 jobs:
 
   fmt:
@@ -42,8 +46,6 @@ jobs:
 
   docs:
     runs-on: ubuntu-latest
-    env:
-      RUSTDOCFLAGS: -Dbroken_intra_doc_links
     steps:
       - uses: actions/checkout@master
       - uses: actions-rs/toolchain@v1

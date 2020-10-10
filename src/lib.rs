@@ -65,7 +65,13 @@
 //! # }
 //! ```
 
-#![deny(missing_docs, missing_debug_implementations)]
+#![warn(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    unused_extern_crates,
+    unused_qualifications
+)]
 
 use std::marker::PhantomData;
 use std::slice::ChunksExact;
