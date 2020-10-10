@@ -93,16 +93,6 @@ where
         }
     }
 
-    /// Creates a new [`WString`] from a [`str`].
-    #[inline]
-    pub fn from_str(s: &str) -> Self {
-        let mut new = Self::with_capacity(s.len());
-        for ch in s.chars() {
-            new.push(ch);
-        }
-        new
-    }
-
     /// Converts this string into a byte vector.
     #[inline]
     pub fn into_bytes(self) -> Vec<u8> {
@@ -389,7 +379,11 @@ where
 {
     #[inline]
     fn from(source: &str) -> Self {
-        Self::from_str(source)
+        let mut new = Self::with_capacity(source.len());
+        for ch in source.chars() {
+            new.push(ch);
+        }
+        new
     }
 }
 
@@ -399,7 +393,11 @@ where
 {
     #[inline]
     fn from(source: &mut str) -> Self {
-        Self::from_str(source)
+        let mut new = Self::with_capacity(source.len());
+        for ch in source.chars() {
+            new.push(ch);
+        }
+        new
     }
 }
 
@@ -409,7 +407,7 @@ where
 {
     #[inline]
     fn from(source: &String) -> Self {
-        Self::from_str(source.as_str())
+        Self::from(source.as_str())
     }
 }
 
@@ -470,10 +468,10 @@ mod tests {
 
     #[test]
     fn test_from_str() {
-        let s: WString<LE> = WString::from_str("hello");
+        let s: WString<LE> = WString::from("hello");
         assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
 
-        let s: WString<BE> = WString::from_str("hello");
+        let s: WString<BE> = WString::from("hello");
         assert_eq!(s.as_bytes(), b"\x00h\x00e\x00l\x00l\x00o");
 
         let s: WString<LE> = From::from("hello");
@@ -487,6 +485,10 @@ mod tests {
     #[test]
     fn test_from_string() {
         let v = String::from("hello");
+
+        let s: WString<LE> = WString::from(&v);
+        assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
+
         let s: WString<LE> = From::from(&v);
         assert_eq!(s.as_bytes(), b"h\x00e\x00l\x00l\x00o\x00");
     }

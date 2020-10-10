@@ -1,6 +1,6 @@
 [package]
 name = "utf16string"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     "Floris Bruynooghe <flub@devork.be>",
     "Sentry <oss@sentry.io>",

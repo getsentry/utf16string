@@ -37,10 +37,10 @@
 //! ```
 //! use utf16string::{BigEndian, BE, WString};
 //!
-//! let s0: WString<BigEndian> = WString::from_str("hello");
+//! let s0: WString<BigEndian> = WString::from("hello");
 //! assert_eq!(s0.len(), 10);
 //!
-//! let s1: WString<BE> = WString::from_str("hello");
+//! let s1: WString<BE> = WString::from("hello");
 //! assert_eq!(s0, s1);
 //! ```
 //!
@@ -116,7 +116,7 @@ pub struct Utf16Error {
 /// ```
 /// use utf16string::{LE, WString};
 ///
-/// let s0: WString<LE> = WString::from_str("hello");
+/// let s0: WString<LE> = WString::from("hello");
 /// assert_eq!(s0.len(), 10);
 ///
 /// let s1: WString<LE> = From::from("hello");
