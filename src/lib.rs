@@ -70,7 +70,8 @@
     missing_debug_implementations,
     missing_copy_implementations,
     unused_extern_crates,
-    unused_qualifications
+    unused_qualifications,
+    clippy::all
 )]
 
 use std::marker::PhantomData;
