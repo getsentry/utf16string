@@ -79,7 +79,7 @@ use std::slice::ChunksExact;
 
 use byteorder::ByteOrder;
 
-pub use byteorder::{BigEndian, LittleEndian, BE, LE};
+pub use byteorder::{BigEndian, LittleEndian, NativeEndian, BE, LE};
 
 mod error;
 mod iters;
@@ -130,7 +130,7 @@ pub struct Utf16Error {
 /// assert_eq!(s0, s1);
 /// ```
 #[derive(Debug, Eq, PartialEq, Hash)]
-pub struct WString<E: 'static + ByteOrder> {
+pub struct WString<E: 'static + ByteOrder = NativeEndian> {
     buf: Vec<u8>,
     _endian: PhantomData<&'static E>,
 }
@@ -160,7 +160,7 @@ pub struct WString<E: 'static + ByteOrder> {
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 #[repr(transparent)]
-pub struct WStr<E: 'static + ByteOrder> {
+pub struct WStr<E: 'static + ByteOrder = NativeEndian> {
     _endian: PhantomData<&'static E>,
     raw: [u8],
 }
@@ -170,7 +170,7 @@ pub struct WStr<E: 'static + ByteOrder> {
 /// The slice must contain valid UTF-16, otherwise this may panic or cause undefined
 /// behaviour.
 #[derive(Debug)]
-pub struct WStrChars<'a, E: 'static + ByteOrder> {
+pub struct WStrChars<'a, E: 'static + ByteOrder = NativeEndian> {
     chunks: ChunksExact<'a, u8>,
     _endian: PhantomData<&'static E>,
 }
@@ -180,7 +180,7 @@ pub struct WStrChars<'a, E: 'static + ByteOrder> {
 /// The slice must contain valid UTF-16, otherwise this may panic or cause undefined
 /// behaviour.
 #[derive(Debug)]
-pub struct WStrCharIndices<'a, E: 'static + ByteOrder> {
+pub struct WStrCharIndices<'a, E: 'static + ByteOrder = NativeEndian> {
     chars: WStrChars<'a, E>,
     index: usize,
 }
