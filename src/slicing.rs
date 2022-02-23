@@ -2,13 +2,15 @@
 //!
 //! This supports all slicing for [`WStr`] and [`WString`].
 
-use std::ops::{
+use core::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
 use byteorder::ByteOrder;
 
-use crate::{WStr, WString};
+use crate::WStr;
+#[cfg(any(feature = "alloc", feature = "std"))]
+use crate::WString;
 
 mod private {
     use super::*;
@@ -22,7 +24,7 @@ mod private {
     impl SealedSliceIndex for RangeInclusive<usize> {}
     impl SealedSliceIndex for RangeToInclusive<usize> {}
 }
-/// Our own version of [`std::slice::SliceIndex`].
+/// Our own version of [`core::slice::SliceIndex`].
 ///
 /// Since this is a sealed trait, we need to re-define this trait.  This trait itself is
 /// sealed as well.
@@ -137,14 +139,14 @@ where
     unsafe fn get_unchecked(self, slice: &WStr<E>) -> &Self::Output {
         let ptr = slice.as_ptr().add(self.start);
         let len = self.end - self.start;
-        WStr::from_utf16_unchecked(std::slice::from_raw_parts(ptr, len))
+        WStr::from_utf16_unchecked(core::slice::from_raw_parts(ptr, len))
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: &mut WStr<E>) -> &mut Self::Output {
         let ptr = slice.as_mut_ptr().add(self.start);
         let len = self.end - self.start;
-        WStr::from_utf16_unchecked_mut(std::slice::from_raw_parts_mut(ptr, len))
+        WStr::from_utf16_unchecked_mut(core::slice::from_raw_parts_mut(ptr, len))
     }
 
     #[inline]
@@ -186,13 +188,13 @@ where
     #[inline]
     unsafe fn get_unchecked(self, slice: &WStr<E>) -> &Self::Output {
         let ptr = slice.as_ptr();
-        WStr::from_utf16_unchecked(std::slice::from_raw_parts(ptr, self.end))
+        WStr::from_utf16_unchecked(core::slice::from_raw_parts(ptr, self.end))
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: &mut WStr<E>) -> &mut Self::Output {
         let ptr = slice.as_mut_ptr();
-        WStr::from_utf16_unchecked_mut(std::slice::from_raw_parts_mut(ptr, self.end))
+        WStr::from_utf16_unchecked_mut(core::slice::from_raw_parts_mut(ptr, self.end))
     }
 
     #[inline]
@@ -235,14 +237,14 @@ where
     unsafe fn get_unchecked(self, slice: &WStr<E>) -> &Self::Output {
         let ptr = slice.as_ptr().add(self.start);
         let len = slice.len() - self.start;
-        WStr::from_utf16_unchecked(std::slice::from_raw_parts(ptr, len))
+        WStr::from_utf16_unchecked(core::slice::from_raw_parts(ptr, len))
     }
 
     #[inline]
     unsafe fn get_unchecked_mut(self, slice: &mut WStr<E>) -> &mut Self::Output {
         let ptr = slice.as_mut_ptr().add(self.start);
         let len = slice.len() - self.start;
-        WStr::from_utf16_unchecked_mut(std::slice::from_raw_parts_mut(ptr, len))
+        WStr::from_utf16_unchecked_mut(core::slice::from_raw_parts_mut(ptr, len))
     }
 
     #[inline]
@@ -384,6 +386,7 @@ where
     }
 }
 
+#[cfg(any(feature = "alloc", feature = "std"))]
 impl<I, E> Index<I> for WString<E>
 where
     I: SliceIndex<WStr<E>>,
@@ -397,6 +400,7 @@ where
     }
 }
 
+#[cfg(any(feature = "alloc", feature = "std"))]
 impl<I, E> IndexMut<I> for WString<E>
 where
     I: SliceIndex<WStr<E>>,
@@ -409,6 +413,7 @@ where
 }
 
 #[cfg(test)]
+#[cfg(any(feature = "alloc", feature = "std"))]
 mod tests {
     use super::*;
 

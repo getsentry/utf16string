@@ -3,7 +3,8 @@
 //! The type itself lives in the `lib.rs` file to avoid having to have a public alias, but
 //! implementations live here.
 
-use std::fmt;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
 
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 
@@ -278,6 +279,7 @@ where
     }
 
     /// Returns this [`WStr`] as a new owned [`String`].
+    #[cfg(any(feature = "alloc", feature = "std"))]
     pub fn to_utf8(&self) -> String {
         self.chars().collect()
     }
@@ -299,18 +301,26 @@ where
     }
 }
 
-impl<E> fmt::Display for WStr<E>
+#[cfg(any(feature = "alloc", feature = "std"))]
+impl<E> core::fmt::Display for WStr<E>
 where
     E: ByteOrder,
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", self.to_utf8())
     }
 }
 
 #[cfg(test)]
+#[cfg(any(feature = "alloc", feature = "std"))]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "alloc")]
+    use alloc::vec::Vec;
+
+    #[cfg(feature = "alloc")]
+    use alloc::format;
 
     #[test]
     fn test_wstr_from_utf16le() {
