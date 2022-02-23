@@ -53,7 +53,7 @@ pub(crate) unsafe fn decode_surrogates(u: u16, u2: u16) -> char {
     );
     let c = (((u - 0xD800) as u32) << 10 | (u2 - 0xDC00) as u32) + 0x1_0000;
     // SAFETY: This is now guaranteed a valid Unicode code point.
-    unsafe { std::char::from_u32_unchecked(c) }
+    unsafe { core::char::from_u32_unchecked(c) }
 }
 
 /// Checks that the raw bytes are valid UTF-16LE.
@@ -65,7 +65,7 @@ pub(crate) unsafe fn decode_surrogates(u: u16, u2: u16) -> char {
 /// We compute `valid_up_to` lazily for performance, even though it's a little more verbose.
 pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Error> {
     let base_ptr = raw.as_ptr() as usize;
-    let mut chunks = raw.chunks_exact(std::mem::size_of::<u16>());
+    let mut chunks = raw.chunks_exact(core::mem::size_of::<u16>());
 
     while let Some(chunk) = chunks.next() {
         let code_point_ptr = chunk.as_ptr() as usize;
@@ -74,7 +74,7 @@ pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Er
         if is_trailing_surrogate(code_point) {
             return Err(Utf16Error {
                 valid_up_to: code_point_ptr - base_ptr,
-                error_len: Some(std::mem::size_of::<u16>() as u8),
+                error_len: Some(core::mem::size_of::<u16>() as u8),
             });
         }
 
@@ -84,7 +84,7 @@ pub(crate) fn validate_raw_utf16<E: ByteOrder>(raw: &[u8]) -> Result<(), Utf16Er
                     if !is_trailing_surrogate(u2) {
                         return Err(Utf16Error {
                             valid_up_to: code_point_ptr - base_ptr,
-                            error_len: Some(std::mem::size_of::<u16>() as u8),
+                            error_len: Some(core::mem::size_of::<u16>() as u8),
                         });
                     }
                 }
@@ -158,10 +158,14 @@ impl Utf16CharExt for char {
 }
 
 #[cfg(test)]
+#[cfg(any(feature = "alloc", feature = "std"))]
 mod tests {
     use super::*;
 
     use crate::{WStr, LE};
+
+    #[cfg(feature = "alloc")]
+    use alloc::vec;
 
     #[test]
     fn test_is_leading_surrogate() {
@@ -254,12 +258,12 @@ mod tests {
     #[test]
     fn test_utf16_char_ext_len_utf16_bytes() {
         let l0 = 'c'.encoded_utf16_len();
-        let l1 = 'c'.len_utf16() * std::mem::size_of::<u16>();
+        let l1 = 'c'.len_utf16() * core::mem::size_of::<u16>();
         assert_eq!(l0, l1);
         assert_eq!(l0, 2);
 
         let l0 = '\u{10000}'.encoded_utf16_len();
-        let l1 = '\u{10000}'.len_utf16() * std::mem::size_of::<u16>();
+        let l1 = '\u{10000}'.len_utf16() * core::mem::size_of::<u16>();
         assert_eq!(l0, l1);
         assert_eq!(l0, 4);
     }

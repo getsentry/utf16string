@@ -3,8 +3,15 @@
 //! The type itself lives in the `lib.rs` file to avoid having to have a public alias, but
 //! implementations live here.
 
-use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
+#[cfg(feature = "alloc")]
+use alloc::{
+    vec::Vec,
+    string::String
+};
+
+
+use core::marker::PhantomData;
+use core::ops::{Deref, DerefMut};
 
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 
@@ -195,7 +202,7 @@ where
         let next = idx + ch.encoded_utf16_len();
         let len = self.len();
         unsafe {
-            std::ptr::copy(
+            core::ptr::copy(
                 self.buf.as_ptr().add(next),
                 self.buf.as_mut_ptr().add(idx),
                 len - next,
@@ -223,7 +230,7 @@ where
                 del_bytes += ch_len;
             } else if del_bytes > 0 {
                 unsafe {
-                    std::ptr::copy(
+                    core::ptr::copy(
                         self.buf.as_ptr().add(idx),
                         self.buf.as_mut_ptr().add(idx - del_bytes),
                         ch_len,
@@ -264,12 +271,12 @@ where
         self.buf.reserve(len_bytes);
 
         unsafe {
-            std::ptr::copy(
+            core::ptr::copy(
                 self.buf.as_ptr().add(idx),
                 self.buf.as_mut_ptr().add(idx + len_bytes),
                 orig_len - idx,
             );
-            std::ptr::copy(bytes.as_ptr(), self.buf.as_mut_ptr().add(idx), len_bytes);
+            core::ptr::copy(bytes.as_ptr(), self.buf.as_mut_ptr().add(idx), len_bytes);
             self.buf.set_len(orig_len + len_bytes);
         }
     }
@@ -412,7 +419,9 @@ where
 }
 
 #[cfg(test)]
+#[cfg(any(feature = "std"))]
 mod tests {
+
     use byteorder::{BE, LE};
 
     use super::*;

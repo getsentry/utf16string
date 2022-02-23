@@ -5,7 +5,7 @@
 
 use byteorder::ByteOrder;
 
-use std::iter::FusedIterator;
+use core::iter::FusedIterator;
 
 use crate::utf16::{decode_surrogates, is_leading_surrogate, is_trailing_surrogate, Utf16CharExt};
 use crate::{WStrCharIndices, WStrChars};
@@ -24,7 +24,7 @@ where
 
         if !is_leading_surrogate(u) {
             // SAFETY: This is now guaranteed a valid Unicode code point.
-            Some(unsafe { std::char::from_u32_unchecked(u as u32) })
+            Some(unsafe { core::char::from_u32_unchecked(u as u32) })
         } else {
             let chunk = self.chunks.next().expect("missing trailing surrogate");
             let u2 = E::read_u16(chunk);
@@ -64,7 +64,7 @@ where
 
         if !is_trailing_surrogate(u) {
             // SAFETY: This is now guaranteed a valid Unicode code point.
-            Some(unsafe { std::char::from_u32_unchecked(u as u32) })
+            Some(unsafe { core::char::from_u32_unchecked(u as u32) })
         } else {
             let chunk = self.chunks.next_back().expect("missing leading surrogate");
             let u2 = E::read_u16(chunk);
@@ -110,7 +110,7 @@ where
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         let c = self.chars.next_back()?;
-        let pos = self.index + self.chars.chunks.len() * std::mem::size_of::<u16>();
+        let pos = self.index + self.chars.chunks.len() * core::mem::size_of::<u16>();
         Some((pos, c))
     }
 }
@@ -118,6 +118,7 @@ where
 impl<'a, E> FusedIterator for WStrCharIndices<'a, E> where E: ByteOrder {}
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod tests {
     use crate::WStr;
 
