@@ -74,7 +74,7 @@
     clippy::all
 )]
 
-use std::marker::PhantomData;
+use std::{borrow::Borrow, marker::PhantomData};
 use std::slice::ChunksExact;
 
 use byteorder::ByteOrder;
@@ -130,9 +130,9 @@ pub struct Utf16Error {
 /// assert_eq!(s0, s1);
 /// ```
 #[derive(Debug, Eq, PartialEq, Hash)]
-pub struct WString<E: 'static + ByteOrder> {
+pub struct WString<E: ByteOrder> {
     buf: Vec<u8>,
-    _endian: PhantomData<&'static E>,
+    _endian: PhantomData<fn() -> E>,
 }
 
 /// A UTF-16 [`str`]-like type with little- or big-endian byte order.
@@ -160,8 +160,8 @@ pub struct WString<E: 'static + ByteOrder> {
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 #[repr(transparent)]
-pub struct WStr<E: 'static + ByteOrder> {
-    _endian: PhantomData<&'static E>,
+pub struct WStr<E: ByteOrder> {
+    _endian: PhantomData<fn() -> E>,
     raw: [u8],
 }
 
@@ -170,9 +170,9 @@ pub struct WStr<E: 'static + ByteOrder> {
 /// The slice must contain valid UTF-16, otherwise this may panic or cause undefined
 /// behaviour.
 #[derive(Debug)]
-pub struct WStrChars<'a, E: 'static + ByteOrder> {
+pub struct WStrChars<'a, E: ByteOrder> {
     chunks: ChunksExact<'a, u8>,
-    _endian: PhantomData<&'static E>,
+    _endian: PhantomData<fn() -> E>,
 }
 
 /// Iterator yielding `(index, char)` tuples from a UTF-16 little-endian encoded byte slice.
@@ -180,7 +180,23 @@ pub struct WStrChars<'a, E: 'static + ByteOrder> {
 /// The slice must contain valid UTF-16, otherwise this may panic or cause undefined
 /// behaviour.
 #[derive(Debug)]
-pub struct WStrCharIndices<'a, E: 'static + ByteOrder> {
+pub struct WStrCharIndices<'a, E: ByteOrder> {
     chars: WStrChars<'a, E>,
     index: usize,
+}
+
+impl<E: ByteOrder> Borrow<WStr<E>> for WString<E> {
+    fn borrow(&self) -> &WStr<E> {
+        return self.as_wstr()
+    } 
+}
+
+impl<E: ByteOrder> ToOwned for WStr<E> {
+    type Owned = WString<E>;
+
+    fn to_owned(&self) -> Self::Owned {
+        let mut wstr = WString::with_capacity(self.len());
+        wstr.insert_wstr(0, self);
+        wstr
+    }
 }
