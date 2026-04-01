@@ -1,6 +1,5 @@
 //! Implementations for [`Utf16Error`].
 
-use std::error::Error;
 use std::fmt;
 
 use crate::Utf16Error;
@@ -11,7 +10,7 @@ impl fmt::Display for Utf16Error {
     }
 }
 
-impl Error for Utf16Error {}
+impl std::error::Error for Utf16Error {}
 
 impl Utf16Error {
     /// Returns the index in given bytes up to which valid UTF-16 was verified.

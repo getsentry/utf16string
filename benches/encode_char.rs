@@ -30,7 +30,7 @@ fn bench_encode_char_stdlib(b: &mut Bencher) {
         for ch in chars.iter().copied() {
             let mut buf_u16 = [0u16; 2];
             let code_units = ch.encode_utf16(&mut buf_u16);
-            let byte_count = code_units.len() * std::mem::size_of::<u16>();
+            let byte_count = code_units.len() * core::mem::size_of::<u16>();
             let mut buf = [0u8; 4];
             LE::write_u16_into(code_units, &mut buf[..byte_count]);
             vec.extend_from_slice(&buf[..byte_count]);
